@@ -22,10 +22,12 @@ import kotlin.math.sign
 
 // our custom offset overscroll that offset the element it is applied to when we hit the bound
 // on the scrollable container.
+// Uses OverscrollEffect interface to create a custom overscroll effect class
 class CustomOverscrollEffect(val scope: CoroutineScope, val orientation: Orientation) :
     OverscrollEffect {
     private val overscrollOffset = Animatable(0f)
 
+    //Applies overscroll to performScroll
     override fun applyToScroll(
         delta: Offset, source: NestedScrollSource, performScroll: (Offset) -> Offset
     ): Offset {
@@ -40,14 +42,14 @@ class CustomOverscrollEffect(val scope: CoroutineScope, val orientation: Orienta
         val consumedByPreScroll = if (abs(overscrollOffset.value) > 0.5 && !sameDirection) {
             val prevOverscrollValue = overscrollOffset.value
             val newOverscrollValue = overscrollOffset.value + scrollDelta
+            //if sign changes, coerce to start scrolling and exit
             if (sign(prevOverscrollValue) != sign(newOverscrollValue)) {
-                // sign changed, coerce to start scrolling and exit
                 scope.launch { overscrollOffset.snapTo(0f) }
+                // Do not consume any offset
                 if (orientation == Orientation.Vertical) {
                     Offset(
-                        x = 0f,
-                        y = scrollDelta + prevOverscrollValue
-                    ) // we did not consume any offset
+                        x = 0f, y = scrollDelta + prevOverscrollValue
+                    )
                 } else {
                     Offset(x = scrollDelta + prevOverscrollValue, y = 0f)
                 }
@@ -77,9 +79,9 @@ class CustomOverscrollEffect(val scope: CoroutineScope, val orientation: Orienta
         velocity: Velocity, performFling: suspend (Velocity) -> Velocity
     ) {
         val consumed = performFling(velocity)
-        val scrollVelocity = if (orientation == Orientation.Vertical) velocity.y else velocity.x
-        // when the fling happens - we just gradually animate our overscroll to 0
         val remaining = velocity - consumed
+        val scrollVelocity = if (orientation == Orientation.Vertical) remaining.y else remaining.x
+        // when the fling happens, we just gradually animate our overscroll to 0
         overscrollOffset.animateTo(
             targetValue = 0f, initialVelocity = scrollVelocity, animationSpec = spring()
         )
@@ -96,8 +98,7 @@ class CustomOverscrollEffect(val scope: CoroutineScope, val orientation: Orienta
             val placeable = measurable.measure(constraints)
             return layout(placeable.width, placeable.height) {
                 val offsetValue = if (orientation == Orientation.Vertical) IntOffset(
-                    x = 0,
-                    y = overscrollOffset.value.roundToInt()
+                    x = 0, y = overscrollOffset.value.roundToInt()
                 ) else IntOffset(x = overscrollOffset.value.roundToInt(), y = 0)
 
                 placeable.placeRelativeWithLayer(offsetValue.x, offsetValue.y)
