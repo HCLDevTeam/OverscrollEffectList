@@ -44,7 +44,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
+    implementation(platform("androidx.compose:compose-bom:2025.05.00"))
     implementation(libs.androidx.foundation)
     lintChecks("com.slack.lint.compose:compose-lint-checks:1.4.2")
     implementation(libs.kotlinx.collections.immutable)
